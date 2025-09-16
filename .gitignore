@@ -1,0 +1,24 @@
+Dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+Local Environment Variables
+Exclude all .env files from Git to protect sensitive keys.
+Use .env.example to show developers which variables are needed.
+.env
+.env.*
+!.env.example
+
+Next.js build output
+.next/
+/out/
+
+Production builds
+/build
+
+Other
+.DS_Store
+*.pem
+*.log

@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trifecta Project Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Neutral Hub with Trifecta Accents -->
+    <!-- Application Structure Plan: A single-page dashboard with a fixed sidebar for navigation between five key sections: Dashboard overview, 'Apps' comparison, 'Technical Roadmap' visualization, 'Market Context' analysis, and a new 'Gemini Assistant' for AI-powered project strategy. This structure allows non-linear exploration and adds an intelligent, interactive layer for brainstorming and analysis, making the hub a true command center. The user can jump between static project data and dynamic AI insights seamlessly. -->
+    <!-- Visualization & Content Choices: Dashboard: Interactive HTML cards. Apps: Dynamic text blocks and a Polar Area chart (Chart.js) for thematic comparison. Roadmap: CSS-based flow diagram. Market Context: Radar chart (Chart.js) for competitive analysis. Gemini Assistant: A chat interface (HTML/JS) that calls the Gemini API to provide strategic insights based on a comprehensive system prompt detailing the project. All choices prioritize interactivity and clarity. No SVG or Mermaid is used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .app-title, .orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .nav-link {
+            transition: all 0.2s ease-in-out;
+        }
+        .nav-link.active {
+            background-color: #e0e7ff;
+            color: #4338ca;
+            border-left-width: 4px;
+            border-color: #4f46e5;
+        }
+        .app-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .app-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 40vh;
+            max-height: 450px;
+        }
+        .flow-line {
+            position: relative;
+            width: 2px;
+            background-color: #cbd5e1;
+            margin: 0 auto;
+        }
+        .flow-line::after {
+            content: '▼';
+            position: absolute;
+            bottom: -1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #94a3b8;
+        }
+        .branch-box {
+            border: 2px solid;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        .chat-bubble {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            margin-bottom: 10px;
+        }
+        .user-bubble {
+            background-color: #4f46e5;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+        .gemini-bubble {
+            background-color: #e5e7eb;
+            color: #1f2937;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+        .loader {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #4f46e5;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+    <div class="flex min-h-screen">
+        <aside class="w-64 bg-white shadow-md fixed h-full">
+            <div class="p-6">
+                <h1 class="text-2xl font-bold text-indigo-600 orbitron">Trifecta Hub</h1>
+                <p class="text-sm text-slate-500 mt-1">Project Command Center</p>
+            </div>
+            <nav class="mt-4">
+                <a href="#dashboard" class="nav-link active flex items-center py-3 px-6 text-slate-600 hover:bg-slate-100">
+                    <span class="mr-3">📊</span> Dashboard
+                </a>
+                <a href="#apps" class="nav-link flex items-center py-3 px-6 text-slate-600 hover:bg-slate-100">
+                    <span class="mr-3">📱</span> The Apps
+                </a>
+                <a href="#roadmap" class="nav-link flex items-center py-3 px-6 text-slate-600 hover:bg-slate-100">
+                    <span class="mr-3">🗺️</span> Technical Roadmap
+                </a>
+                <a href="#market" class="nav-link flex items-center py-3 px-6 text-slate-600 hover:bg-slate-100">
+                    <span class="mr-3">🚀</span> Market Context
+                </a>
+                 <a href="#gemini" class="nav-link flex items-center py-3 px-6 text-slate-600 hover:bg-slate-100">
+                    <span class="mr-3">🤖</span> Gemini Assistant
+                </a>
+            </nav>
+        </aside>
+
+        <main class="ml-64 flex-1 p-6 sm:p-8 md:p-12">
+            <section id="dashboard" class="content-section active">
+                <header class="mb-8">
+                    <h2 class="text-4xl font-bold text-slate-900">Project Dashboard</h2>
+                    <p class="text-lg text-slate-500 mt-2">A 3-in-1 system unifying three distinct applications under one vision.</p>
+                </header>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="app-card bg-white rounded-lg shadow-lg overflow-hidden border-t-4 border-indigo-500">
+                        <div class="p-6">
+                            <h3 class="text-2xl font-bold app-title" style="color: #6d28d9;">🌌 Astro Archive</h3>
+                            <p class="mt-2 text-slate-600">A cosmic knowledge repository for space science, data, and discoveries. Aims to inspire curiosity through exploration and preservation.</p>
+                        </div>
+                    </div>
+                    <div class="app-card bg-white rounded-lg shadow-lg overflow-hidden border-t-4 border-emerald-500">
+                        <div class="p-6">
+                            <h3 class="text-2xl font-bold" style="color: #059669;">🗿 Relic</h3>
+                            <p class="mt-2 text-slate-600">A tool for preserving and discovering artifacts, blending ancient wisdom with futuristic technology to uncover forgotten knowledge.</p>
+                        </div>
+                    </div>
+                    <div class="app-card bg-white rounded-lg shadow-lg overflow-hidden border-t-4 border-rose-500">
+                        <div class="p-6">
+                            <h3 class="text-2xl font-bold" style="color: #e11d48;">🐾 Peata</h3>
+                            <p class="mt-2 text-slate-600">A community-centered AI companion app designed to build connection, empathy, and support between humans, pets, and AI.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-12 bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-2xl font-bold mb-4">Core Project Goals</h3>
+                    <div class="space-y-4">
+                        <p class="flex items-start"><span class="text-indigo-500 font-bold mr-2">✓</span><span><strong>Scale Prototypes:</strong> Demonstrate the ability to grow multiple MVPs into a single, cohesive ecosystem.</span></p>
+                        <p class="flex items-start"><span class="text-indigo-500 font-bold mr-2">✓</span><span><strong>Master Collaboration:</strong> Serve as a sandbox for professional GitHub workflows (branches, PRs, CI/CD).</span></p>
+                        <p class="flex items-start"><span class="text-indigo-500 font-bold mr-2">✓</span><span><strong>Think Beyond MVP:</strong> Focus on long-term infrastructure, security, and growth, preparing for founding engineer roles.</span></p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="apps" class="content-section">
+                <header class="mb-8">
+                    <h2 class="text-4xl font-bold text-slate-900">The Apps: Identity & Design</h2>
+                    <p class="text-lg text-slate-500 mt-2">Explore the unique purpose, themes, and visual direction for each application in the Trifecta system. Each app has its own identity, but together they represent the breadth of AI for humanity.</p>
+                </header>
+
+                <div class="flex justify-center mb-8">
+                    <div id="appSelector" class="flex space-x-2 bg-slate-200 p-1 rounded-lg">
+                        <button data-app="astro" class="app-btn active bg-white text-indigo-600 rounded-md px-4 py-2 font-semibold">🌌 Astro Archive</button>
+                        <button data-app="relic" class="app-btn text-slate-600 rounded-md px-4 py-2 font-semibold">🗿 Relic</button>
+                        <button data-app="peata" class="app-btn text-slate-600 rounded-md px-4 py-2 font-semibold">🐾 Peata</button>
+                    </div>
+                </div>
+                
+                <div id="appDetails" class="bg-white p-8 rounded-lg shadow-lg min-h-[300px]">
+                </div>
+
+                 <div class="mt-12 bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-2xl font-bold mb-4 text-center">Trifecta Thematic Focus</h3>
+                     <p class="text-center text-slate-500 mb-6">Visualizing how the Trifecta system's focus is distributed across its core themes.</p>
+                    <div class="chart-container">
+                        <canvas id="themesChart"></canvas>
+                    </div>
+                </div>
+
+            </section>
+
+            <section id="roadmap" class="content-section">
+                <header class="mb-8">
+                    <h2 class="text-4xl font-bold text-slate-900">Technical Roadmap</h2>
+                    <p class="text-lg text-slate-500 mt-2">An overview of the project's infrastructure, integration strategy, and development workflow.</p>
+                </header>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-lg">
+                        <h3 class="text-2xl font-bold mb-4">Infrastructure & Integration</h3>
+                        <ul class="space-y-3 list-disc list-inside text-slate-600">
+                            <li><strong>Current Deployments:</strong> Astro Archive (Streamlit), Relic (Vercel), Peata (Streamlit).</li>
+                            <li><strong>Long-Term Vision:</strong> Unify all apps behind a central Next.js landing hub deployed on Vercel for scalability and security.</li>
+                            <li><strong>Future Goal:</strong> Consider containerization with Docker for improved portability, consistency, and simplified deployment across environments.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-lg">
+                        <h3 class="text-2xl font-bold mb-4">CI/CD Pipeline (Future)</h3>
+                         <ul class="space-y-3 list-disc list-inside text-slate-600">
+                             <li><strong>Automation:</strong> Implement a `.github/workflows/deploy.yml` file.</li>
+                             <li><strong>Triggers:</strong> Automatically redeploy an application when changes are detected in its specific directory (`astro-archive/`, `relic/`, `peata/`).</li>
+                             <li><strong>Efficiency:</strong> Streamline the deployment process, ensuring rapid and reliable updates.</li>
+                         </ul>
+                    </div>
+                </div>
+
+                <div class="mt-12 bg-white p-8 rounded-lg shadow-lg">
+                    <h3 class="text-2xl font-bold mb-6 text-center">GitHub Branching Workflow</h3>
+                    <div class="flex flex-col items-center">
+                        <div class="branch-box border-green-500 text-green-700 bg-green-50">main (Production)</div>
+                        <div class="h-16 flow-line"></div>
+                        <div class="branch-box border-blue-500 text-blue-700 bg-blue-50">develop (Staging)</div>
+                        <div class="h-16 flow-line"></div>
+                        <div class="flex space-x-8">
+                            <div class="branch-box border-purple-500 text-purple-700 bg-purple-50">feature/*</div>
+                            <div class="branch-box border-red-500 text-red-700 bg-red-50">hotfix/*</div>
+                        </div>
+                    </div>
+                    <p class="text-center mt-6 text-slate-600">Feature branches are merged into `develop` via Pull Request. After successful staging, `develop` is merged into `main` for production release.</p>
+                </div>
+
+            </section>
+            
+            <section id="market" class="content-section">
+                <header class="mb-8">
+                    <h2 class="text-4xl font-bold text-slate-900">Market Context & Opportunity</h2>
+                    <p class="text-lg text-slate-500 mt-2">Analyzing how the Trifecta apps can improve upon or replace existing solutions used by space agencies. This chart shows a comparative analysis based on key AI techniques and operational focuses.</p>
+                </header>
+
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-2xl font-bold mb-4 text-center">Comparative AI Capabilities</h3>
+                    <p class="text-center text-slate-500 mb-6">This analysis highlights potential gaps in current systems that the Trifecta apps are designed to fill. Interact with the legend to toggle datasets and compare capabilities.</p>
+                    <div class="chart-container">
+                        <canvas id="marketChart"></canvas>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="gemini" class="content-section">
+                <header class="mb-8">
+                    <h2 class="text-4xl font-bold text-slate-900">Gemini Project Assistant</h2>
+                    <p class="text-lg text-slate-500 mt-2">Ask strategic questions about the Trifecta project. Get insights on market positioning, feature ideas, or technical strategy.</p>
+                </header>
+
+                <div class="bg-white rounded-lg shadow-lg">
+                    <div id="chat-window" class="p-6 h-[60vh] overflow-y-auto flex flex-col space-y-4">
+                       <div class="chat-bubble gemini-bubble">Hello! I'm your Trifecta project assistant. How can I help you strategize today? You could ask things like "What is a potential risk for the Relic app?" or "Brainstorm a new feature for Astro Archive."</div>
+                    </div>
+                    <div id="chat-loader" class="p-6 text-center hidden">
+                        <div class="loader mx-auto"></div>
+                        <p class="text-slate-500 mt-2">Thinking...</p>
+                    </div>
+                    <div class="p-4 border-t border-slate-200 bg-slate-50 rounded-b-lg">
+                        <form id="chat-form" class="flex items-center space-x-4">
+                            <input id="chat-input" type="text" placeholder="Ask a strategic question..." class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">Send</button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const contentSections = document.querySelectorAll('.content-section');
+            const appSelector = document.getElementById('appSelector');
+            const appDetailsContainer = document.getElementById('appDetails');
+            const chatForm = document.getElementById('chat-form');
+            const chatInput = document.getElementById('chat-input');
+            const chatWindow = document.getElementById('chat-window');
+            const chatLoader = document.getElementById('chat-loader');
+
+            const appData = {
+                astro: {
+                    title: "🌌 Astro Archive",
+                    purpose: "A knowledge/archive app for space science, data, or artifacts. Think of it as a repository of cosmic knowledge — cataloging discoveries, references, or even media related to space missions and research.",
+                    themes: "Exploration + Preservation, Order + Wonder",
+                    colors: "Deep navy/black, Purple/blue/white gradients, Pale yellow/silver highlights",
+                    visuals: "Constellations as navigation, Subtle glowing grids, Starlight particles, Futuristic sans-serif fonts (Orbitron, Inter)."
+                },
+                relic: {
+                    title: "🗿 Relic",
+                    purpose: "A tool that focuses on preservation and discovery of artifacts or knowledge (digital or historical). Could connect to storytelling, heritage, or data preservation for future generations.",
+                    themes: "Ancient meets Futuristic, Mystery + Revelation",
+                    colors: "Earthy stone/bronze, Emerald green/gold/teal accents, Neon blue/gold highlights",
+                    visuals: "Glowing artifact/rune, Sci-fi UI on ancient textures, Geometric + serif font blend (Cinzel, Roboto)."
+                },
+                peata: {
+                    title: "🐾 Peata",
+                    purpose: "A community-centered AI companion app (pets, caretaking, or emotional AI). Aims to build connection, empathy, and support between humans and AI (and pets).",
+                    themes: "Companionship + Playfulness, Community + Care",
+                    colors: "Soft blues/pastel purples, Bright coral/green/yellow accents",
+                    visuals: "Rounded shapes (paws, bubbles), Friendly AI mascot, Soft, human-centered sans-serif fonts (Poppins, Nunito)."
+                }
+            };
+            
+            const navigateTo = (hash) => {
+                const targetId = hash.substring(1);
+                navLinks.forEach(link => {
+                    link.classList.toggle('active', link.getAttribute('href') === hash);
+                });
+                contentSections.forEach(section => {
+                    section.classList.toggle('active', section.id === targetId);
+                });
+            };
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const hash = e.currentTarget.getAttribute('href');
+                    if (window.location.hash !== hash) {
+                       window.location.hash = hash;
+                    } else {
+                       navigateTo(hash);
+                    }
+                });
+            });
+
+            window.addEventListener('hashchange', () => {
+                navigateTo(window.location.hash || '#dashboard');
+            });
+            
+            const updateAppDetails = (appName) => {
+                if(!appDetailsContainer) return;
+                const data = appData[appName];
+                appDetailsContainer.innerHTML = `
+                    <h3 class="text-3xl font-bold mb-4 app-title">${data.title}</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-slate-700">
+                        <div>
+                            <h4 class="font-semibold text-lg mb-2 text-slate-800">Purpose</h4>
+                            <p>${data.purpose}</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-lg mb-2 text-slate-800">Themes</h4>
+                            <p>${data.themes}</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-lg mb-2 text-slate-800">Color Scheme</h4>
+                            <p>${data.colors}</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-lg mb-2 text-slate-800">Visual Style</h4>
+                            <p>${data.visuals}</p>
+                        </div>
+                    </div>
+                `;
+            };
+            
+            if (appSelector) {
+                appSelector.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'BUTTON' && !e.target.classList.contains('active')) {
+                        appSelector.querySelectorAll('button').forEach(btn => {
+                            btn.classList.remove('active', 'bg-white', 'text-indigo-600');
+                            btn.classList.add('text-slate-600');
+                        });
+                        e.target.classList.add('active', 'bg-white', 'text-indigo-600');
+                        e.target.classList.remove('text-slate-600');
+                        updateAppDetails(e.target.dataset.app);
+                    }
+                });
+            }
+            
+            const projectContextSystemPrompt = `
+                You are an expert-level AI project strategist and founding engineer. Your task is to provide concise, insightful, and actionable advice based on the Trifecta Project an information hub.
+
+                HERE IS THE FULL PROJECT CONTEXT:
+
+                1. The Trifecta Concept: A 3-in-1 system with three unified apps:
+                   - Astro Archive: A cosmic knowledge repository for space science. Deployed on Streamlit. Themes: Exploration, Preservation, Order, Wonder.
+                   - Relic: A tool for preserving digital or historical artifacts. Deployed on Vercel. Themes: Ancient meets Futuristic, Mystery, Revelation.
+                   - Peata: A community-centered AI companion for pets and emotional support. Deployed on Streamlit. Themes: Companionship, Playfulness, Community, Care.
+                   - Combined themes are: Knowledge (Astro), Heritage (Relic), Emotion (Peata).
+
+                2. Core Goals:
+                   - Scale multiple prototypes into a single ecosystem.
+                   - Serve as a sandbox for professional GitHub collaboration (main, develop, feature branches).
+                   - Think beyond MVP: focus on infrastructure, CI/CD, security, and growth.
+
+                3. Technical Roadmap:
+                   - Current State: Separate deployments on Streamlit and Vercel.
+                   - Long-Term: Unify behind a Next.js hub on Vercel. Consider Docker for portability.
+                   - CI/CD Goal: Use .github/workflows/ to auto-deploy changes to each app's directory.
+
+                4. Market Context:
+                   - The goal is to create better versions of software currently used by space agencies (NASA, ESA, etc.) for operational, pre-launch, and post-mission tasks.
+                   - The apps should integrate with or replace current systems by leveraging advanced AI techniques like agentic AI, RAG, real-time monitoring, and digital twins.
+
+                YOUR ROLE:
+                - Analyze user questions in the context of this project.
+                - Provide strategic, not just factual, answers.
+                - Keep responses clear, concise, and formatted with markdown for readability (e.g., use bullet points).
+                - Do not repeat the context back to the user. Assume they know it.
+            `;
+
+            const callGeminiAPI = async (userMessage) => {
+                chatLoader.classList.remove('hidden');
+                chatInput.disabled = true;
+
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: userMessage }] }],
+                    systemInstruction: {
+                        parts: [{ text: projectContextSystemPrompt }]
+                    },
+                };
+                
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API error: ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    
+                    if (text) {
+                        appendMessage(text, 'gemini');
+                    } else {
+                        appendMessage('Sorry, I could not generate a response. Please try again.', 'gemini');
+                    }
+                } catch (error) {
+                    console.error('Gemini API call failed:', error);
+                    appendMessage('An error occurred while contacting the assistant. Please check the console.', 'gemini');
+                } finally {
+                    chatLoader.classList.add('hidden');
+                    chatInput.disabled = false;
+                    chatInput.focus();
+                }
+            };
+            
+            const appendMessage = (message, sender) => {
+                const bubble = document.createElement('div');
+                bubble.classList.add('chat-bubble');
+                if (sender === 'user') {
+                    bubble.classList.add('user-bubble');
+                    bubble.textContent = message;
+                } else {
+                    bubble.classList.add('gemini-bubble');
+                    // Simple markdown to HTML conversion for bullet points
+                    let htmlMessage = message.replace(/\n/g, '<br>');
+                    htmlMessage = htmlMessage.replace(/\* (.*?)(?=<br>|$)/g, '<li>$1</li>');
+                    htmlMessage = htmlMessage.replace(/(<li>.*<\/li>)/g, '<ul>$1</ul>');
+                    bubble.innerHTML = htmlMessage;
+                }
+                chatWindow.appendChild(bubble);
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            };
+
+            if (chatForm) {
+                chatForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const message = chatInput.value.trim();
+                    if (message) {
+                        appendMessage(message, 'user');
+                        callGeminiAPI(message);
+                        chatInput.value = '';
+                    }
+                });
+            }
+
+            navigateTo(window.location.hash || '#dashboard');
+            updateAppDetails('astro');
+           
+            const createThemesChart = () => {
+                const ctx = document.getElementById('themesChart')?.getContext('2d');
+                if (!ctx) return;
+                new Chart(ctx, {
+                    type: 'polarArea',
+                    data: {
+                        labels: ['Knowledge (Astro)', 'Heritage (Relic)', 'Emotion (Peata)'],
+                        datasets: [{
+                            label: 'Thematic Focus',
+                            data: [35, 35, 30],
+                            backgroundColor: [ 'rgba(79, 70, 229, 0.7)', 'rgba(5, 150, 105, 0.7)', 'rgba(225, 29, 72, 0.7)' ],
+                            borderColor: [ 'rgb(79, 70, 229)', 'rgb(5, 150, 105)', 'rgb(225, 29, 72)' ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: { r: { grid: { color: 'rgba(203, 213, 225, 0.5)' }, ticks: { backdropColor: 'rgba(248, 250, 252, 0.75)' } } },
+                        plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: (c) => `${c.label}: ${c.raw}%` } } }
+                    }
+                });
+            };
+
+            const createMarketChart = () => {
+                const ctx = document.getElementById('marketChart')?.getContext('2d');
+                if (!ctx) return;
+                new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Agentic AI', 'RAG', 'Real-time Monitoring', 'Digital Twins', 'Data Preservation', 'Human-in-the-Loop'],
+                        datasets: [
+                        { label: 'Current Systems (Avg)', data: [5, 6, 8, 7, 6, 8], fill: true, backgroundColor: 'rgba(100, 116, 139, 0.2)', borderColor: 'rgb(100, 116, 139)', pointBackgroundColor: 'rgb(100, 116, 139)' },
+                        { label: 'Astro Archive', data: [7, 9, 6, 8, 9, 7], fill: true, backgroundColor: 'rgba(79, 70, 229, 0.2)', borderColor: 'rgb(79, 70, 229)', pointBackgroundColor: 'rgb(79, 70, 229)' },
+                        { label: 'Relic', data: [6, 8, 5, 6, 10, 8], fill: true, backgroundColor: 'rgba(5, 150, 105, 0.2)', borderColor: 'rgb(5, 150, 105)', pointBackgroundColor: 'rgb(5, 150, 105)' },
+                        { label: 'Peata', data: [8, 6, 7, 5, 5, 10], fill: true, backgroundColor: 'rgba(225, 29, 72, 0.2)', borderColor: 'rgb(225, 29, 72)', pointBackgroundColor: 'rgb(225, 29, 72)' }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: { r: { beginAtZero: true, max: 10, grid: { color: 'rgba(203, 213, 225, 0.5)' }, pointLabels: { font: { size: 12 } }, ticks: { stepSize: 2 } } },
+                        plugins: { legend: { position: 'top' } }
+                    }
+                });
+            };
+
+            createThemesChart();
+            createMarketChart();
+        });
+    </script>
+</body>
+</html>
+

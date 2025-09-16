@@ -1,0 +1,100 @@
+'use client';
+
+import { useState } from 'react';
+
+export default function Home() {
+  // State variables to hold the API response and loading status
+  const [apiResponse, setApiResponse] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  // Function to handle the API call
+  const handleApiCall = async () => {
+    setIsLoading(true);
+    setError('');
+    setApiResponse('');
+
+    // IMPORTANT: Replace this with your actual API key
+    // In a real app, this should come from an environment variable
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || ""; 
+    const projectId = 'sesa-trifecta-street-25'; // Your project ID
+    
+    // Check if the API key is provided
+    if (!apiKey) {
+      setError("API Key is missing. Please set it in your environment variables.");
+      setIsLoading(false);
+      return;
+    }
+
+    const apiUrl = `https://us-central1-aiplatform.googleapis.com/v1/projects/${projectId}/locations/us-central1/publishers/google/models/gemini-1.0-pro-vision-001:streamGenerateContent`;
+
+    const payload = {
+      contents: [{
+        parts: [{ text: "Write a short, encouraging welcome message for a new software project hub." }]
+      }]
+    };
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`, // NOTE: Vertex AI uses Bearer token, you'll need to get one
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      // NOTE: The above fetch will fail without a proper OAuth token.
+      // This is a placeholder to demonstrate the structure.
+      // For a real application, you need to implement server-side authentication
+      // to securely get an access token.
+      
+      // Placeholder response for demonstration since the direct API call is complex
+      setApiResponse("This is a placeholder response. To make a real API call from the client-side, you'd need a secure way to get an OAuth 2.0 access token. The recommended approach is to have a backend (Next.js API route) handle this authentication securely.");
+      
+      // A more realistic client-side friendly API (like the one from `generativelanguage.googleapis.com`)
+      // would be used like this, but let's stick to the Vertex AI endpoint for demonstration.
+      
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(`An error occurred: ${err.message}. Check the browser console for more details.`);
+      } else {
+        setError('An unknown error occurred.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center p-24 bg-slate-50 text-slate-900">
+      <div className="w-full max-w-2xl text-center">
+        <h1 className="text-4xl font-bold mb-4">Sesa-Trifecta-Street-25</h1>
+        <p className="text-lg text-slate-600 mb-8">
+          This is the starting point for the unified Trifecta Hub. Use the button below to test the connection to the Vertex AI Gemini API.
+        </p>
+
+        <div className="bg-white p-8 rounded-lg shadow-md border border-slate-200">
+          <button
+            onClick={handleApiCall}
+            disabled={isLoading}
+            className="bg-indigo-600 text-white font-semibold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed"
+          >
+            {isLoading ? 'Calling API...' : 'Test Gemini API'}
+          </button>
+
+          {/* Display area for results */}
+          <div className="mt-6 text-left p-4 bg-slate-100 rounded-md min-h-[100px] whitespace-pre-wrap font-mono text-sm">
+            {isLoading && <p className="text-slate-500">Waiting for response...</p>}
+            {error && <p className="text-red-500">{error}</p>}
+            {apiResponse && <p className="text-green-700">{apiResponse}</p>}
+            {!isLoading && !error && !apiResponse && <p className="text-slate-400">API response will appear here...</p>}
+          </div>
+        </div>
+        <p className="text-xs text-slate-400 mt-4">
+          After a successful test, check your Google Cloud Billing reports to confirm the cost is deducted from your credit.
+        </p>
+      </div>
+    </main>
+  );
+}
