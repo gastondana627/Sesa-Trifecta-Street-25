@@ -38,3 +38,17 @@ backend/*.pyc
 # IDE / OS
 .DS_Store
 .vscode/
+
+
+# Secret service account key
+backend/service-account-key.json
+/Users/gastondana/Downloads/Sesa-Trifecta-Street-25/backend/sesa-trifecta-street-25-08c2967e69e5.json
+/Users/gastondana/Downloads/Sesa-Trifecta-Street-25/backend/sesa-trifecta-street-25-08c2967e69e5.json
+
+
+# Secret service account key
+backend/service-account-key.json
+
+# Secret Google Cloud Credentials
+backend/service-account-key.json
+backend/*.json
