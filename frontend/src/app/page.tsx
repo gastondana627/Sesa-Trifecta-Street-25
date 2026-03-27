@@ -9,13 +9,19 @@ const Spinner = () => (
   </svg>
 );
 
+interface InventoryResponse {
+  mode: string;
+  ai_response: string;
+  user_query: string;
+}
+
 export default function AstroArchive() {
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [response, setResponse] = useState(null);
+  const [response, setResponse] = useState<InventoryResponse | null>(null);
   const [error, setError] = useState("");
 
-  const handleQuery = async (e) => {
+  const handleQuery = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
 
@@ -23,8 +29,10 @@ export default function AstroArchive() {
     setResponse(null);
     setError("");
 
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5001';
+
     try {
-      const res = await fetch('http://127.0.0.1:5001/api/inventory/query', {
+      const res = await fetch(`${apiUrl}/api/inventory/query`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
