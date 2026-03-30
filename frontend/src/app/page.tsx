@@ -28,7 +28,7 @@ const Spinner = () => (
   </svg>
 );
 
-const AppData = {
+const AppData: Record<string, any> = {
     astro: {
         title: "🌌 Astro Archive",
         purpose: "A knowledge/archive app for space science, data, or artifacts. Think of it as a repository of cosmic knowledge — cataloging discoveries, references, or even media related to space missions and research.",
@@ -72,15 +72,21 @@ const marketChartData = {
   ],
 };
 
+interface InventoryResponse {
+  mode: string;
+  ai_response: string;
+  user_query: string;
+}
+
 export default function TrifectaDashboard() {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [activeApp, setActiveApp] = useState('astro');
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [aiResponse, setAiResponse] = useState(null);
+  const [aiResponse, setAiResponse] = useState<InventoryResponse | null>(null);
   const [error, setError] = useState("");
 
-  const handleQuery = async (e) => {
+  const handleQuery = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
 
@@ -88,8 +94,9 @@ export default function TrifectaDashboard() {
     setAiResponse(null);
     setError("");
 
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5001';
+
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5001';
       const res = await fetch(`${apiUrl}/api/inventory/query`, {
         method: 'POST',
         headers: {
